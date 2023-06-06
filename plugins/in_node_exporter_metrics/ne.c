@@ -42,6 +42,7 @@
 #include "ne_textfile.h"
 #include "ne_systemd.h"
 #include "ne_processes.h"
+#include "ne_thermalzone_linux.h"
 
 static int ne_timer_cpu_metrics_cb(struct flb_input_instance *ins,
                                    struct flb_config *config, void *in_context)
@@ -192,6 +193,18 @@ static int ne_timer_processes_metrics_cb(struct flb_input_instance *ins,
 
     return 0;
 }
+
+static int ne_timer_thermalzone_metrics_cb(struct flb_input_instance *ins,
+                                           struct flb_config *config, void *in_context)
+{
+    struct flb_ne *ctx = in_context;
+
+    ne_thermalzone_update_thermal_zones(ctx);
+    ne_thermalzone_update_cooling_devices(ctx);
+
+    return 0;
+}
+
 struct flb_ne_callback {
     char *name;
     void (*func)(char *, void *, void *);
@@ -346,6 +359,14 @@ static void ne_processes_update_cb(char *name, void *p1, void *p2)
     ne_processes_update(ctx);
 }
 
+static void ne_thermalzone_update_cb(char *name, void *p1, void *p2)
+{
+    struct flb_ne *ctx = p1;
+
+    ne_thermalzone_update_thermal_zones(ctx);
+    ne_thermalzone_update_cooling_devices(ctx);
+}
+
 static int ne_update_cb(struct flb_ne *ctx, char *name)
 {
     int ret;
@@ -374,6 +395,7 @@ struct flb_ne_callback ne_callbacks[] = {
     { "textfile", ne_textfile_update_cb },
     { "systemd", ne_systemd_update_cb },
     { "processes", ne_processes_update_cb },
+    { "thermal_zone", ne_thermalzone_update_cb },
     { 0 }
 };
 
@@ -740,6 +762,26 @@ static int in_ne_init(struct flb_input_instance *in,
                     }
                     ne_processes_init(ctx);
                 }
+                else if (strncmp(entry->str, "thermal_zone", 12) == 0) {
+                    if (ctx->thermalzone_scrape_interval == 0) {
+                        flb_plg_debug(ctx->ins, "enabled metrics %s", entry->str);
+                        metric_idx = 14;
+                    }
+                    else if (ctx->thermalzone_scrape_interval > 0) {
+                        /* Create the thermalzone collector */
+                        ret = flb_input_set_collector_time(in,
+                                                           ne_timer_thermalzone_metrics_cb,
+                                                           ctx->thermalzone_scrape_interval, 0,
+                                                           config);
+                        if (ret == -1) {
+                            flb_plg_error(ctx->ins,
+                                          "could not set thermal zone collector for Node Exporter Metrics plugin");
+                            return -1;
+                        }
+                        ctx->coll_thermalzone_fd = ret;
+                    }
+                    ne_thermalzone_init(ctx);
+                }
                 else {
                     flb_plg_warn(ctx->ins, "Unknown metrics: %s", entry->str);
                     metric_idx = -1;
@@ -918,6 +960,9 @@ static void in_ne_pause(void *data, struct flb_config *config)
     if (ctx->coll_processes_fd != -1) {
         flb_input_collector_pause(ctx->coll_processes_fd, ctx->ins);
     }
+    if (ctx->coll_thermalzone_fd != -1) {
+        flb_input_collector_pause(ctx->coll_systemd_fd, ctx->ins);
+    }
 }
 
 static void in_ne_resume(void *data, struct flb_config *config)
@@ -969,6 +1014,9 @@ static void in_ne_resume(void *data, struct flb_config *config)
     }
     if (ctx->coll_processes_fd != -1) {
         flb_input_collector_resume(ctx->coll_processes_fd, ctx->ins);
+    }
+    if (ctx->coll_thermalzone_fd != -1) {
+        flb_input_collector_resume(ctx->coll_systemd_fd, ctx->ins);
     }
 }
 
@@ -1068,6 +1116,11 @@ static struct flb_config_map config_map[] = {
      FLB_CONFIG_MAP_TIME, "collector.processes.scrape_interval", "0",
      0, FLB_TRUE, offsetof(struct flb_ne, processes_scrape_interval),
      "scrape interval to collect processes metrics from the node."
+    },
+    {
+     FLB_CONFIG_MAP_TIME, "collector.thermalzone.scrape_interval", "0",
+     0, FLB_TRUE, offsetof(struct flb_ne, thermalzone_scrape_interval),
+     "scrape interval to collect thermal zone metrics from the node."
     },
 
     {
