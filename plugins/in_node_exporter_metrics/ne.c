@@ -433,6 +433,7 @@ static int in_ne_init(struct flb_input_instance *in,
     ctx->coll_textfile_fd = -1;
     ctx->coll_systemd_fd = -1;
     ctx->coll_processes_fd = -1;
+    ctx->coll_thermalzone_fd = -1;
 
     ctx->callback = flb_callback_create(in->name);
     if (!ctx->callback) {
