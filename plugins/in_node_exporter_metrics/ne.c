@@ -1119,7 +1119,7 @@ static struct flb_config_map config_map[] = {
      "scrape interval to collect processes metrics from the node."
     },
     {
-     FLB_CONFIG_MAP_TIME, "collector.thermalzone.scrape_interval", "0",
+     FLB_CONFIG_MAP_TIME, "collector.thermal_zone.scrape_interval", "0",
      0, FLB_TRUE, offsetof(struct flb_ne, thermalzone_scrape_interval),
      "scrape interval to collect thermal zone metrics from the node."
     },
