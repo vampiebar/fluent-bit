@@ -42,7 +42,7 @@
 #include "ne_textfile.h"
 #include "ne_systemd.h"
 #include "ne_processes.h"
-#include "ne_thermalzone_linux.h"
+#include "ne_thermalzone.h"
 
 static int ne_timer_cpu_metrics_cb(struct flb_input_instance *ins,
                                    struct flb_config *config, void *in_context)

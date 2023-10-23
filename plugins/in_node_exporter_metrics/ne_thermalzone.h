@@ -2,7 +2,7 @@
 
 /*  Fluent Bit
  *  ==========
- *  Copyright (C) 2015-2022 The Fluent Bit Authors
+ *  Copyright (C) 2015-2023 The Fluent Bit Authors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,30 @@
  *  limitations under the License.
  */
 
-#ifndef FLB_IN_NE_THERMALZONE_LINUX_H
-#define FLB_IN_NE_THERMALZONE_LINUX_H
+#ifndef FLB_IN_NE_THERMALZONE_H
+#define FLB_IN_NE_THERMALZONE_H
 
 #include "ne.h"
 
-#define THERMAL_ZONE_BASE "/class/thermal/thermal_zone"
-#define THERMAL_ZONE_PATTERN THERMAL_ZONE_BASE "[0-9]*"
-#define COOLING_DEVICE_BASE "/class/thermal/cooling_device"
-#define COOLING_DEVICE_PATTERN COOLING_DEVICE_BASE "[0-9]*"
+#ifdef __linux__
+int ne_thermalzone_init(struct flb_ne *ctx);
+int ne_thermalzone_update_thermal_zones(struct flb_ne *ctx);
+int ne_thermalzone_update_cooling_devices(struct flb_ne *ctx);
+#else
+static int ne_thermalzone_init(struct flb_ne *ctx)
+{
+    return 0;
+}
+
+static int ne_thermalzone_update_thermal_zones(struct flb_ne *ctx)
+{
+    return 0;
+}
+
+static int ne_thermalzone_update_cooling_devices(struct flb_ne *ctx)
+{
+    return 0;
+}
+#endif
 
 #endif

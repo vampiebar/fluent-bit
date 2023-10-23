@@ -2,7 +2,7 @@
 
 /*  Fluent Bit
  *  ==========
- *  Copyright (C) 2015-2022 The Fluent Bit Authors
+ *  Copyright (C) 2015-2023 The Fluent Bit Authors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,6 @@
  *  limitations under the License.
  */
 
-#ifndef FLB_IN_NE_THERMALZONE_LINUX_H
-#define FLB_IN_NE_THERMALZONE_LINUX_H
-
-#include "ne.h"
-
-#define THERMAL_ZONE_BASE "/class/thermal/thermal_zone"
-#define THERMAL_ZONE_PATTERN THERMAL_ZONE_BASE "[0-9]*"
-#define COOLING_DEVICE_BASE "/class/thermal/cooling_device"
-#define COOLING_DEVICE_PATTERN COOLING_DEVICE_BASE "[0-9]*"
-
+#ifdef __linux__
+#include "ne_thermalzone_linux.c"
 #endif

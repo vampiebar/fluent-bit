@@ -14,7 +14,7 @@ set(src
   ne_processes.c
   ne_utils.c
   ne_config.c
-  ne_thermalzone_linux.c
+  ne_thermalzone.c
   ne.c
   )
 
